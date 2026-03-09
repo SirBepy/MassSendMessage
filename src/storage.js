@@ -14,23 +14,3 @@ export function loadConfig() {
     return null;
   }
 }
-
-export function saveSentKeys(keys) {
-  try {
-    localStorage.setItem('wis_sent_keys', JSON.stringify(keys));
-  } catch (e) {}
-}
-
-export function loadSentKeys() {
-  try {
-    const item = localStorage.getItem('wis_sent_keys');
-    if (item === null) return [];
-    const parsed = JSON.parse(item);
-    if (Array.isArray(parsed) && parsed.every(v => typeof v === 'string')) {
-      return parsed;
-    }
-    return [];
-  } catch (e) {
-    return [];
-  }
-}

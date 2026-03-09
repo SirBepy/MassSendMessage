@@ -1,109 +1,179 @@
-export class SheetFetchError extends Error {
+export class SheetApiError extends Error {
   constructor(message) {
     super(message);
-    this.name = 'SheetFetchError';
+    this.name = 'SheetApiError';
   }
 }
 
-export class SheetParseError extends Error {
+export class SheetAuthError extends Error {
   constructor(message) {
     super(message);
-    this.name = 'SheetParseError';
+    this.name = 'SheetAuthError';
   }
 }
 
-function normalizeSheetUrl(url) {
-  if (url.includes('/export') && url.includes('format=csv')) {
-    return url;
+function colIndexToLetter(index) {
+  let letter = '';
+  let n = index;
+  while (n >= 0) {
+    letter = String.fromCharCode((n % 26) + 65) + letter;
+    n = Math.floor(n / 26) - 1;
   }
-
-  try {
-    const parsed = new URL(url);
-    const pathMatch = parsed.pathname.match(/\/spreadsheets\/d\/([^/]+)\//);
-    if (parsed.hostname === 'docs.google.com' && pathMatch) {
-      const id = pathMatch[1];
-      const gid = parsed.searchParams.get('gid') || parsed.hash.match(/gid=(\d+)/)?.[1] || '0';
-      return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
-    }
-  } catch {
-    // invalid URL, fall through
-  }
-
-  return url;
+  return letter;
 }
 
-function parseCSV(text) {
-  const rows = [];
-  const lines = text.split('\n');
-
-  for (const line of lines) {
-    const cells = [];
-    let current = '';
-    let inQuotes = false;
-
-    for (let i = 0; i < line.length; i++) {
-      const ch = line[i];
-      if (ch === '"') {
-        inQuotes = !inQuotes;
-      } else if (ch === ',' && !inQuotes) {
-        cells.push(current);
-        current = '';
-      } else {
-        current += ch;
-      }
-    }
-    cells.push(current);
-
-    if (cells.every(c => c === '')) continue;
-    rows.push(cells);
+export function extractSheetId(url) {
+  const parsed = new URL(url);
+  const pathMatch = parsed.pathname.match(/\/spreadsheets\/d\/([^/]+)/);
+  if (!pathMatch) {
+    throw new Error('Invalid Google Sheets URL — could not extract spreadsheet ID.');
   }
-
-  return rows;
+  const spreadsheetId = pathMatch[1];
+  const gid =
+    parsed.searchParams.get('gid') ??
+    parsed.hash.match(/gid=(\d+)/)?.[1] ??
+    '0';
+  return { spreadsheetId, gid };
 }
 
-export async function fetchAndParse(url) {
-  const fetchUrl = normalizeSheetUrl(url);
-  let response;
-  try {
-    response = await fetch(fetchUrl);
-  } catch {
-    if (!navigator.onLine) {
-      throw new SheetFetchError("Could not reach the sheet. Check your internet connection.");
-    }
-    throw new SheetFetchError("Could not load the sheet — make sure it is shared as 'Anyone with the link can view'.");
+async function handleResponse(response) {
+  if (response.status === 401 || response.status === 403) {
+    throw new SheetAuthError('Authentication failed — please sign in again.');
   }
-
   if (!response.ok) {
-    throw new SheetFetchError("Could not load the sheet — make sure it is shared as 'Anyone with the link can view'.");
+    const text = await response.text().catch(() => '');
+    throw new SheetApiError(`Sheets API error ${response.status}: ${text}`);
+  }
+  return response.json();
+}
+
+export async function readSheet(spreadsheetId, gid, token) {
+  const metaRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  const meta = await handleResponse(metaRes);
+
+  let sheetTitle;
+  const sheets = meta.sheets ?? [];
+  const matched = sheets.find(s => s.properties.sheetId === Number(gid));
+  if (matched) {
+    sheetTitle = matched.properties.title;
+  } else if (gid === '0' && sheets.length > 0) {
+    sheetTitle = sheets[0].properties.title;
+  } else {
+    throw new SheetApiError('Could not find the specified sheet tab.');
   }
 
-  const text = await response.text();
+  const valRes = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(sheetTitle)}`,
+    { headers: { Authorization: `Bearer ${token}` } }
+  );
+  const valData = await handleResponse(valRes);
 
-  const contentType = response.headers.get('content-type') || '';
-  const trimmed = text.trimStart().toLowerCase();
-  if (contentType.includes('text/html') || trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html')) {
-    throw new SheetFetchError("The sheet link did not return CSV data. Make sure the sheet is shared as 'Anyone with the link can view' and that the link is a valid Google Sheets URL.");
+  const values = valData.values ?? [];
+  if (values.length === 0) {
+    throw new SheetApiError('The sheet appears to be empty or has no headers.');
   }
 
-  const parsed = parseCSV(text);
+  const headers = values[0];
+  const statusColIdx = headers.indexOf('Invite Status');
+  const tsColIdx = headers.indexOf('Sent At');
 
-  if (parsed.length === 0) {
-    throw new SheetParseError("The sheet appears to be empty or has no headers.");
-  }
-
-  const headers = parsed[0];
-
-  if (headers.length === 0) {
-    throw new SheetParseError("The sheet appears to be empty or has no headers.");
-  }
-
-  const rows = parsed.slice(1).map(cells => {
-    const obj = {};
-    headers.forEach((h, i) => {
-      obj[h] = cells[i] ?? '';
+  const rows = values.slice(1).map((row, i) => {
+    const rawValues = {};
+    headers.forEach((h, hi) => {
+      rawValues[h] = row[hi] ?? '';
     });
-    return obj;
+    return {
+      rowIndex: i + 2,
+      isSent: row[statusColIdx] === 'Sent',
+      sentAt: row[tsColIdx] ?? '',
+      ...rawValues
+    };
   });
 
-  return { headers, rows };
+  return { headers, rows, sheetTitle };
+}
+
+export async function ensureStatusColumns(spreadsheetId, sheetId, headers, token, sheetTitle) {
+  if (!sheetTitle) {
+    const metaRes = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}?fields=sheets.properties`,
+      { headers: { Authorization: `Bearer ${token}` } }
+    );
+    const meta = await handleResponse(metaRes);
+    const sheets = meta.sheets ?? [];
+    const matched = sheets.find(s => s.properties.sheetId === Number(sheetId));
+    if (matched) {
+      sheetTitle = matched.properties.title;
+    } else if (sheetId === 0 && sheets.length > 0) {
+      sheetTitle = sheets[0].properties.title;
+    } else {
+      throw new SheetApiError('Could not resolve sheet tab title from the provided sheet ID.');
+    }
+  }
+
+  const missing = [];
+  if (!headers.includes('Invite Status')) missing.push('Invite Status');
+  if (!headers.includes('Sent At')) missing.push('Sent At');
+
+  let currentHeaders = [...headers];
+
+  for (const label of missing) {
+    const colLetter = colIndexToLetter(currentHeaders.length);
+    const range = `${sheetTitle}!${colLetter}1`;
+    const res = await fetch(
+      `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+      {
+        method: 'PUT',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ values: [[label]] })
+      }
+    );
+    if (res.status === 401 || res.status === 403) {
+      throw new SheetAuthError('Authentication failed — please sign in again.');
+    }
+    if (!res.ok) {
+      const text = await res.text().catch(() => '');
+      throw new SheetApiError(`Sheets API error ${res.status}: ${text}`);
+    }
+    currentHeaders.push(label);
+  }
+
+  const statusColIndex = currentHeaders.indexOf('Invite Status');
+  const timestampColIndex = currentHeaders.indexOf('Sent At');
+
+  return { headers: currentHeaders, statusColIndex, timestampColIndex };
+}
+
+export async function writeStatus(spreadsheetId, rowIndex, statusColIndex, timestampColIndex, sent, token, sheetTitle = '') {
+  const statusLetter = colIndexToLetter(statusColIndex);
+  const tsLetter = colIndexToLetter(timestampColIndex);
+  const prefix = sheetTitle ? `${sheetTitle}!` : '';
+  const range = `${prefix}${statusLetter}${rowIndex}:${tsLetter}${rowIndex}`;
+  const values = sent ? [['Sent', new Date().toISOString()]] : [['', '']];
+
+  const res = await fetch(
+    `https://sheets.googleapis.com/v4/spreadsheets/${spreadsheetId}/values/${encodeURIComponent(range)}?valueInputOption=RAW`,
+    {
+      method: 'PUT',
+      headers: {
+        Authorization: `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ values })
+    }
+  );
+
+  if (res.status === 401 || res.status === 403) {
+    throw new SheetAuthError('Authentication failed — please sign in again.');
+  }
+  if (!res.ok) {
+    const text = await res.text().catch(() => '');
+    throw new SheetApiError(`Sheets API error ${res.status}: ${text}`);
+  }
 }

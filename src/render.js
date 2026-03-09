@@ -1,4 +1,4 @@
-import { getValidGuests, getFilteredGuests, isSent } from './state.js'
+import { getValidGuests, getFilteredGuests } from './state.js'
 
 function escapeAttr(str) {
   return String(str)
@@ -17,6 +17,23 @@ function escapeText(str) {
 }
 
 export function render(state, uiState) {
+  if (state.accessToken === null) {
+    const errorHtml = uiState.signInError
+      ? `<p class="error-msg">${escapeText(uiState.signInError)}</p>`
+      : '';
+    document.querySelector('#app').innerHTML = `
+      <div class="page">
+        <div class="card" id="signin-card">
+          <h2>🔐 Sign in</h2>
+          <p>Sign in with your Google account to access your guest sheet.</p>
+          ${errorHtml}
+          <button id="google-signin-btn" class="btn btn-primary">Sign in with Google</button>
+        </div>
+      </div>
+    `;
+    return;
+  }
+
   const headerOptions = state.headers
     .map(
       (h) =>
@@ -77,20 +94,20 @@ export function render(state, uiState) {
   if (columnsReady) {
     const validGuests = getValidGuests();
     const filteredGuests = getFilteredGuests();
-    const sentCount = validGuests.filter(g => isSent(g.key)).length;
+    const sentCount = validGuests.filter(g => g.isSent).length;
     const totalValid = validGuests.length;
     const allSent = totalValid > 0 && sentCount === totalValid;
 
     const guestRows = validGuests.map(guest => {
-      if (isSent(guest.key)) {
-        return `<div class="guest-row sent" style="cursor:default" data-key="${escapeAttr(guest.key)}">
+      if (guest.isSent) {
+        return `<div class="guest-row sent" style="cursor:default" data-row-index="${escapeAttr(guest.rowIndex)}">
           <span>${escapeText(guest.name)}</span>
           <span>${escapeText(guest.phone)}</span>
           <span class="badge sent">✓ Sent</span>
-          <span class="unsent-action" data-key="${escapeAttr(guest.key)}" data-action="mark-unsent">Mark as Unsent</span>
+          <span class="unsent-action" data-row-index="${escapeAttr(guest.rowIndex)}" data-action="mark-unsent">Mark as Unsent</span>
         </div>`;
       } else {
-        return `<div class="guest-row" data-key="${escapeAttr(guest.key)}" data-action="open-whatsapp">
+        return `<div class="guest-row" data-row-index="${escapeAttr(guest.rowIndex)}" data-action="open-whatsapp">
           <span>${escapeText(guest.name)}</span>
           <span>${escapeText(guest.phone)}</span>
           <span class="badge">Unsent</span>

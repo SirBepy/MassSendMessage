@@ -8,12 +8,13 @@ const state = {
   headers: [],
   allRows: [],
   sheetError: null,
-  sentKeys: []
+  spreadsheetId: '',
+  sheetGid: '0',
+  accessToken: null,
+  statusColIndex: -1,
+  timestampColIndex: -1,
+  sheetTitle: ''
 };
-
-function makeKey(name, phone) {
-  return name.trim().toLowerCase() + '|' + phone.trim().toLowerCase();
-}
 
 export function getState() {
   return state;
@@ -32,9 +33,14 @@ export function setConfig({ sheetUrl, nameColumn, phoneColumn, messageTemplate }
   });
 }
 
-export function setSheetData({ headers, allRows }) {
+export function setSheetData({ headers, allRows, spreadsheetId, gid, statusColIndex, timestampColIndex, sheetTitle }) {
   state.headers = headers;
   state.allRows = allRows;
+  state.spreadsheetId = spreadsheetId;
+  state.sheetGid = gid;
+  state.statusColIndex = statusColIndex;
+  state.timestampColIndex = timestampColIndex;
+  state.sheetTitle = sheetTitle ?? '';
   state.sheetError = null;
 }
 
@@ -42,20 +48,24 @@ export function setSheetError(message) {
   state.sheetError = message;
 }
 
-export function markSent(key) {
-  if (!state.sentKeys.includes(key)) {
-    state.sentKeys.push(key);
+export function setAccessToken(token) {
+  state.accessToken = token;
+}
+
+export function markSent(rowIndex) {
+  const row = state.allRows.find(r => r.rowIndex === rowIndex);
+  if (row) {
+    row.isSent = true;
+    row.sentAt = new Date().toISOString();
   }
-  storage.saveSentKeys(state.sentKeys);
 }
 
-export function markUnsent(key) {
-  state.sentKeys = state.sentKeys.filter(k => k !== key);
-  storage.saveSentKeys(state.sentKeys);
-}
-
-export function isSent(key) {
-  return state.sentKeys.includes(key);
+export function markUnsent(rowIndex) {
+  const row = state.allRows.find(r => r.rowIndex === rowIndex);
+  if (row) {
+    row.isSent = false;
+    row.sentAt = '';
+  }
 }
 
 export function getValidGuests() {
@@ -63,14 +73,9 @@ export function getValidGuests() {
     .map(row => {
       const name = row[state.nameColumn]?.trim() ?? '';
       const phone = row[state.phoneColumn]?.trim() ?? '';
-      const isValid = name !== '' && phone !== '';
-      const missingFields = [];
-      if (name === '') missingFields.push('name');
-      if (phone === '') missingFields.push('phone');
-      const key = makeKey(name, phone);
-      return { name, phone, isValid, missingFields, key };
+      return { name, phone, rowIndex: row.rowIndex, isSent: row.isSent, sentAt: row.sentAt };
     })
-    .filter(g => g.isValid === true);
+    .filter(g => g.name !== '' && g.phone !== '');
 }
 
 export function getFilteredGuests() {
@@ -78,14 +83,12 @@ export function getFilteredGuests() {
     .map(row => {
       const name = row[state.nameColumn]?.trim() ?? '';
       const phone = row[state.phoneColumn]?.trim() ?? '';
-      const isValid = name !== '' && phone !== '';
       const missingFields = [];
       if (name === '') missingFields.push('name');
       if (phone === '') missingFields.push('phone');
-      const key = makeKey(name, phone);
-      return { name, phone, isValid, missingFields, key };
+      return { name, phone, rowIndex: row.rowIndex, missingFields };
     })
-    .filter(g => g.isValid === false);
+    .filter(g => g.missingFields.length > 0);
 }
 
 export function loadPersistedState() {
@@ -93,6 +96,4 @@ export function loadPersistedState() {
   if (config !== null) {
     Object.assign(state, config);
   }
-  const loadedKeys = storage.loadSentKeys();
-  state.sentKeys = Array.isArray(loadedKeys) ? loadedKeys : [];
 }
