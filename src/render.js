@@ -1,3 +1,5 @@
+import { getValidGuests, getFilteredGuests, isSent } from './state.js'
+
 function escapeAttr(str) {
   return String(str)
     .replace(/&/g, '&amp;')
@@ -14,7 +16,7 @@ function escapeText(str) {
     .replace(/>/g, '&gt;');
 }
 
-export function render(state) {
+export function render(state, uiState) {
   const headerOptions = state.headers
     .map(
       (h) =>
@@ -71,18 +73,60 @@ export function render(state) {
   const columnsReady =
     state.headers.length > 0 && state.nameColumn && state.phoneColumn;
 
-  const guestListCard = columnsReady
-    ? `
+  let guestListCard;
+  if (columnsReady) {
+    const validGuests = getValidGuests();
+    const filteredGuests = getFilteredGuests();
+    const sentCount = validGuests.filter(g => isSent(g.key)).length;
+    const totalValid = validGuests.length;
+    const allSent = totalValid > 0 && sentCount === totalValid;
+
+    const guestRows = validGuests.map(guest => {
+      if (isSent(guest.key)) {
+        return `<div class="guest-row sent" style="cursor:default" data-key="${escapeAttr(guest.key)}">
+          <span>${escapeText(guest.name)}</span>
+          <span>${escapeText(guest.phone)}</span>
+          <span class="badge sent">✓ Sent</span>
+          <span class="unsent-action" data-key="${escapeAttr(guest.key)}" data-action="mark-unsent">Mark as Unsent</span>
+        </div>`;
+      } else {
+        return `<div class="guest-row" data-key="${escapeAttr(guest.key)}" data-action="open-whatsapp">
+          <span>${escapeText(guest.name)}</span>
+          <span>${escapeText(guest.phone)}</span>
+          <span class="badge">Unsent</span>
+        </div>`;
+      }
+    }).join('');
+
+    const filteredTogglePrefix = uiState.filteredOutExpanded ? '▼' : '▶';
+    const filteredSection = uiState.filteredOutExpanded
+      ? `<div id="filtered-list">${filteredGuests.map(guest => `<div class="guest-row" style="cursor:default;opacity:0.6;">
+          <span>${escapeText(guest.name || '—')}</span>
+          <span>${escapeText(guest.phone || '—')}</span>
+          <span class="badge">${escapeText(guest.missingFields.join(', '))}</span>
+        </div>`).join('')}</div>`
+      : '';
+
+    guestListCard = `
     <div id="guest-list-card" class="card">
       <h2>👥 Guest List</h2>
-      <p>Guest rows will appear here.</p>
+      <div class="progress">${sentCount} / ${totalValid} sent</div>
+      <div class="next-btn-row">
+        <button id="next-unsent-btn" class="btn btn-green"${(totalValid === 0 || allSent) ? ' disabled' : ''}>${totalValid === 0 ? 'No valid guests to send' : allSent ? 'All invitations sent! 🎉' : '▶ Next Unsent'}</button>
+      </div>
+      ${guestRows}
+      <hr />
+      <div class="filtered-toggle" data-action="toggle-filtered">${filteredTogglePrefix} Filtered Out People (${filteredGuests.length} rows missing data)</div>
+      ${filteredSection}
     </div>
-  `
-    : `
+  `;
+  } else {
+    guestListCard = `
     <div id="guest-list-card" class="card">
       <p>Select Name and Phone columns above to see your guest list.</p>
     </div>
   `;
+  }
 
   document.querySelector('#app').innerHTML = `
     <div class="page">

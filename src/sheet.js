@@ -12,6 +12,26 @@ export class SheetParseError extends Error {
   }
 }
 
+function normalizeSheetUrl(url) {
+  if (url.includes('/export') && url.includes('format=csv')) {
+    return url;
+  }
+
+  try {
+    const parsed = new URL(url);
+    const pathMatch = parsed.pathname.match(/\/spreadsheets\/d\/([^/]+)\//);
+    if (parsed.hostname === 'docs.google.com' && pathMatch) {
+      const id = pathMatch[1];
+      const gid = parsed.searchParams.get('gid') || parsed.hash.match(/gid=(\d+)/)?.[1] || '0';
+      return `https://docs.google.com/spreadsheets/d/${id}/export?format=csv&gid=${gid}`;
+    }
+  } catch {
+    // invalid URL, fall through
+  }
+
+  return url;
+}
+
 function parseCSV(text) {
   const rows = [];
   const lines = text.split('\n');
@@ -42,10 +62,14 @@ function parseCSV(text) {
 }
 
 export async function fetchAndParse(url) {
+  const fetchUrl = normalizeSheetUrl(url);
   let response;
   try {
-    response = await fetch(url);
-  } catch (e) {
+    response = await fetch(fetchUrl);
+  } catch {
+    if (!navigator.onLine) {
+      throw new SheetFetchError("Could not reach the sheet. Check your internet connection.");
+    }
     throw new SheetFetchError("Could not load the sheet — make sure it is shared as 'Anyone with the link can view'.");
   }
 
@@ -54,6 +78,13 @@ export async function fetchAndParse(url) {
   }
 
   const text = await response.text();
+
+  const contentType = response.headers.get('content-type') || '';
+  const trimmed = text.trimStart().toLowerCase();
+  if (contentType.includes('text/html') || trimmed.startsWith('<!doctype html') || trimmed.startsWith('<html')) {
+    throw new SheetFetchError("The sheet link did not return CSV data. Make sure the sheet is shared as 'Anyone with the link can view' and that the link is a valid Google Sheets URL.");
+  }
+
   const parsed = parseCSV(text);
 
   if (parsed.length === 0) {
