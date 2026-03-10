@@ -1,27 +1,32 @@
-import * as storage from './storage.js';
+import * as storage from "./storage.js";
 
 const state = {
-  sheetUrl: '',
-  nameColumn: '',
-  phoneColumn: '',
-  messageTemplate: '',
+  sheetUrl: "",
+  nameColumn: "",
+  phoneColumn: "",
+  messageTemplate: "",
   headers: [],
   allRows: [],
   sheetError: null,
-  spreadsheetId: '',
-  sheetGid: '0',
+  spreadsheetId: "",
+  sheetGid: "0",
   accessToken: null,
   statusColIndex: -1,
   timestampColIndex: -1,
-  sheetTitle: '',
-  userEmail: null
+  sheetTitle: "",
+  userEmail: null,
 };
 
 export function getState() {
   return state;
 }
 
-export function setConfig({ sheetUrl, nameColumn, phoneColumn, messageTemplate }) {
+export function setConfig({
+  sheetUrl,
+  nameColumn,
+  phoneColumn,
+  messageTemplate,
+}) {
   if (sheetUrl !== undefined) state.sheetUrl = sheetUrl;
   if (nameColumn !== undefined) state.nameColumn = nameColumn;
   if (phoneColumn !== undefined) state.phoneColumn = phoneColumn;
@@ -30,18 +35,26 @@ export function setConfig({ sheetUrl, nameColumn, phoneColumn, messageTemplate }
     sheetUrl: state.sheetUrl,
     nameColumn: state.nameColumn,
     phoneColumn: state.phoneColumn,
-    messageTemplate: state.messageTemplate
+    messageTemplate: state.messageTemplate,
   });
 }
 
-export function setSheetData({ headers, allRows, spreadsheetId, gid, statusColIndex, timestampColIndex, sheetTitle }) {
+export function setSheetData({
+  headers,
+  allRows,
+  spreadsheetId,
+  gid,
+  statusColIndex,
+  timestampColIndex,
+  sheetTitle,
+}) {
   state.headers = headers;
   state.allRows = allRows;
   state.spreadsheetId = spreadsheetId;
   state.sheetGid = gid;
   state.statusColIndex = statusColIndex;
   state.timestampColIndex = timestampColIndex;
-  state.sheetTitle = sheetTitle ?? '';
+  state.sheetTitle = sheetTitle ?? "";
   state.sheetError = null;
 }
 
@@ -58,7 +71,7 @@ export function setUserEmail(email) {
 }
 
 export function markSent(rowIndex) {
-  const row = state.allRows.find(r => r.rowIndex === rowIndex);
+  const row = state.allRows.find((r) => r.rowIndex === rowIndex);
   if (row) {
     row.isSent = true;
     row.sentAt = new Date().toISOString();
@@ -66,34 +79,40 @@ export function markSent(rowIndex) {
 }
 
 export function markUnsent(rowIndex) {
-  const row = state.allRows.find(r => r.rowIndex === rowIndex);
+  const row = state.allRows.find((r) => r.rowIndex === rowIndex);
   if (row) {
     row.isSent = false;
-    row.sentAt = '';
+    row.sentAt = "";
   }
 }
 
 export function getValidGuests() {
   return state.allRows
-    .map(row => {
-      const name = row[state.nameColumn]?.trim() ?? '';
-      const phone = row[state.phoneColumn]?.trim() ?? '';
-      return { name, phone, rowIndex: row.rowIndex, isSent: row.isSent, sentAt: row.sentAt };
+    .map((row) => {
+      const name = row[state.nameColumn]?.trim() ?? "";
+      const phone = row[state.phoneColumn]?.trim() ?? "";
+      return {
+        name,
+        phone,
+        rowIndex: row.rowIndex,
+        isSent: row.isSent,
+        sentAt: row.sentAt,
+      };
     })
-    .filter(g => g.name !== '' && g.phone !== '');
+    .filter((g) => g.name !== "" && g.phone !== "");
 }
 
 export function getFilteredGuests() {
   return state.allRows
-    .map(row => {
-      const name = row[state.nameColumn]?.trim() ?? '';
-      const phone = row[state.phoneColumn]?.trim() ?? '';
+    .map((row) => {
+      const name = row[state.nameColumn]?.trim() ?? "";
+      const phone = row[state.phoneColumn]?.trim() ?? "";
       const missingFields = [];
-      if (name === '') missingFields.push('name');
-      if (phone === '') missingFields.push('phone');
+      if (name === "") missingFields.push("name");
+      if (phone === "") missingFields.push("phone");
       return { name, phone, rowIndex: row.rowIndex, missingFields };
     })
-    .filter(g => g.missingFields.length > 0);
+    .filter((g) => g.missingFields.length > 0);
 }
 
 export function loadPersistedState() {

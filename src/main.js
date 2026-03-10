@@ -311,7 +311,7 @@ async function initApp() {
     return;
   }
 
-  auth.initAuth(CLIENT_ID, getState().userEmail ?? '');
+  auth.initAuth(CLIENT_ID, getState().userEmail ?? "");
 
   const token = await auth.silentRequestToken();
   if (token) {
