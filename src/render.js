@@ -104,6 +104,8 @@ export function render(state, uiState) {
     const totalValid = validGuests.length;
     const allSent = totalValid > 0 && sentCount === totalValid;
 
+    validGuests.sort((a, b) => Number(a.isSent) - Number(b.isSent));
+
     const guestRows = validGuests.map(guest => {
       if (guest.isSent) {
         return `<div class="guest-row sent" style="cursor:default" data-row-index="${escapeAttr(guest.rowIndex)}">
