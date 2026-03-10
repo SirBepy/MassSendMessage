@@ -1,0 +1,21 @@
+/* Cosmo */
+[data-theme="cosmo"] {
+  --color-primary: #f97316;
+  --color-secondary: #ec4899;
+  --color-accent: #fb923c;
+  --color-background: #1a1015;
+  --color-surface: #231620;
+  --color-surface-alt: #2e1d2b;
+  --color-text: #f5e6ef;
+  --color-text-muted: #9e7d8f;
+  --color-border: #3d2535;
+  --color-success: #86efac;
+  --color-info: #fb923c;
+  --font-heading: "Bricolage Grotesque", system-ui, sans-serif;
+  --font-body: "DM Sans", system-ui, sans-serif;
+  --font-mono: "Fira Code", monospace;
+  --badge-tech-bg: #2e1d2b;
+  --radius-card: 12px;
+  --radius-badge: 8px;
+  --shadow-card: 0 4px 20px rgba(0, 0, 0, 0.4);
+}

@@ -1,0 +1,21 @@
+/* Glacier */
+[data-theme="glacier"] {
+  --color-primary: #60a5fa;
+  --color-secondary: #93c5fd;
+  --color-accent: #38bdf8;
+  --color-background: #0d1117;
+  --color-surface: #161b22;
+  --color-surface-alt: #1c2433;
+  --color-text: #cdd9e5;
+  --color-text-muted: #768390;
+  --color-border: #30363d;
+  --color-success: #56d364;
+  --color-info: #79c0ff;
+  --font-heading: "Inter", system-ui, sans-serif;
+  --font-body: "Plus Jakarta Sans", system-ui, sans-serif;
+  --font-mono: "Fira Code", monospace;
+  --badge-tech-bg: #1c2433;
+  --radius-card: 10px;
+  --radius-badge: 6px;
+  --shadow-card: 0 4px 16px rgba(0, 0, 0, 0.4);
+}
