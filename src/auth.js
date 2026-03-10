@@ -1,13 +1,14 @@
 let _tokenClient = null;
 let _accessToken = null;
 
-export function initAuth(clientId) {
+export function initAuth(clientId, loginHint = '') {
   if (!window.google?.accounts?.oauth2) {
     throw new Error('Google Identity Services is not loaded yet. Ensure the GIS script has loaded before calling initAuth.');
   }
   _tokenClient = window.google.accounts.oauth2.initTokenClient({
     client_id: clientId,
-    scope: 'https://www.googleapis.com/auth/spreadsheets',
+    scope: 'https://www.googleapis.com/auth/spreadsheets email',
+    hint: loginHint || undefined,
     callback: ''
   });
 }
@@ -47,19 +48,22 @@ export function requestToken() {
 }
 
 export function silentRequestToken() {
-  return new Promise((resolve) => {
-    _tokenClient.callback = (response) => {
-      if (response.error) {
-        resolve(null);
-      } else {
-        _accessToken = response.access_token;
-        resolve(_accessToken);
-      }
-    };
-    _tokenClient.requestAccessToken({ prompt: '' });
-  });
+  return Promise.resolve(null);
 }
 
 export function getToken() {
   return _accessToken;
+}
+
+export async function fetchUserEmail(token) {
+  try {
+    const res = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return data.email ?? null;
+  } catch {
+    return null;
+  }
 }

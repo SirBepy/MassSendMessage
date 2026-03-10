@@ -13,7 +13,8 @@ const state = {
   accessToken: null,
   statusColIndex: -1,
   timestampColIndex: -1,
-  sheetTitle: ''
+  sheetTitle: '',
+  userEmail: null
 };
 
 export function getState() {
@@ -50,6 +51,10 @@ export function setSheetError(message) {
 
 export function setAccessToken(token) {
   state.accessToken = token;
+}
+
+export function setUserEmail(email) {
+  state.userEmail = email;
 }
 
 export function markSent(rowIndex) {
@@ -95,5 +100,9 @@ export function loadPersistedState() {
   const config = storage.loadConfig();
   if (config !== null) {
     Object.assign(state, config);
+  }
+  const email = storage.loadUserEmail();
+  if (email) {
+    state.userEmail = email;
   }
 }

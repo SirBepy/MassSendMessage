@@ -14,3 +14,17 @@ export function loadConfig() {
     return null;
   }
 }
+
+export function saveUserEmail(email) {
+  try {
+    localStorage.setItem('wis_user_email', email);
+  } catch (e) {}
+}
+
+export function loadUserEmail() {
+  try {
+    return localStorage.getItem('wis_user_email') ?? null;
+  } catch (e) {
+    return null;
+  }
+}

@@ -21,13 +21,19 @@ export function render(state, uiState) {
     const errorHtml = uiState.signInError
       ? `<p class="error-msg">${escapeText(uiState.signInError)}</p>`
       : '';
+    const welcomeHtml = state.userEmail
+      ? `<p>Welcome back, <strong>${escapeText(state.userEmail)}</strong>! Sign in to continue.</p>`
+      : `<p>Sign in with your Google account to access your guest sheet.</p>`;
+    const btnLabel = state.userEmail
+      ? `Continue as ${escapeText(state.userEmail)}`
+      : 'Sign in with Google';
     document.querySelector('#app').innerHTML = `
       <div class="page">
         <div class="card" id="signin-card">
           <h2>🔐 Sign in</h2>
-          <p>Sign in with your Google account to access your guest sheet.</p>
+          ${welcomeHtml}
           ${errorHtml}
-          <button id="google-signin-btn" class="btn btn-primary">Sign in with Google</button>
+          <button id="google-signin-btn" class="btn btn-primary">${btnLabel}</button>
         </div>
       </div>
     `;
