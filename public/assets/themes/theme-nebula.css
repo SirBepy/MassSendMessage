@@ -1,0 +1,21 @@
+/* Nebula */
+[data-theme="nebula"] {
+  --color-primary: #2dd4bf;
+  --color-secondary: #e879f9;
+  --color-accent: #2dd4bf;
+  --color-background: #080b12;
+  --color-surface: #0e1420;
+  --color-surface-alt: #141c2c;
+  --color-text: #d4e4f0;
+  --color-text-muted: #4a6070;
+  --color-border: #1a2740;
+  --color-success: #34d399;
+  --color-info: #e879f9;
+  --font-heading: "Fredoka", system-ui, sans-serif;
+  --font-body: "Manrope", system-ui, sans-serif;
+  --font-mono: "Fira Code", monospace;
+  --badge-tech-bg: #0e1a2a;
+  --radius-card: 14px;
+  --radius-badge: 6px;
+  --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.55);
+}
