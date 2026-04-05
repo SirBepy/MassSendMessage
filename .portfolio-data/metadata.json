@@ -1,0 +1,14 @@
+{
+  "title": "MassSendMessage",
+  "shortDescription": "Bulk WhatsApp message sender powered by Google Sheets guest lists.",
+  "type": "Web",
+  "status": "finished",
+  "languages": ["JavaScript", "CSS", "HTML"],
+  "frameworks": [],
+  "tools": ["Vite", "Google Sheets API", "Google Identity Services"],
+  "liveUrl": "https://sirbepy.github.io/MassSendMessage/",
+  "mainImage": "screenshot-1.png",
+  "images": ["screenshot-1.png"],
+  "year": 2026,
+  "impressiveness": 3
+}

@@ -5,6 +5,18 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Wedding Invitation Sender</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="icon" type="image/png" href="assets/images/favicon.png" />
+  <link rel="icon" type="image/svg+xml" href="assets/images/favicon.svg" />
+  <meta name="description" content="Bulk WhatsApp message sender that reads a guest list from Google Sheets and sends personalized messages via WhatsApp Web." />
+  <meta property="og:title" content="Wedding Invitation Sender" />
+  <meta property="og:description" content="Bulk WhatsApp message sender that reads a guest list from Google Sheets and sends personalized messages via WhatsApp Web." />
+  <meta property="og:image" content="assets/images/favicon.png" />
+  <meta property="og:url" content="https://sirbepy.github.io/MassSendMessage/" />
+  <meta name="twitter:card" content="summary" />
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#9d7dfc" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/sirbepy/bepy-project-init@main/styleguide.css" />
     <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@300;400;500;600;700;800&family=DM+Sans:wght@300;400;500;600&family=Fredoka:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Bricolage+Grotesque:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
       <style id="active-theme">
 /* Void */
@@ -35,9 +47,17 @@
 <body>
   <div id="app"></div>
   <script src="https://accounts.google.com/gsi/client" async></script>
-  <script type="module" src="/src/main.js"></script>
-    <script src="https://sirbepy.github.io/bepy-project-init/widget/settings.js"></script>
-      <script type="module" src="assets/scripts/build-info.js"></script>
+  <script type="module" src="/src/app.js"></script>
+  <script type="module" src="assets/scripts/build-info.js"></script>
+  <!-- Settings widget - comment out to disable -->
+  <script src="https://cdn.jsdelivr.net/gh/sirbepy/bepy-project-init@main/widget/settings.js"></script>
+  <!-- Animated background. To disable: set window.BEPY_BACKGROUND = false before this tag. To use a custom SVG: set window.BEPY_BG_PATTERN = 'your-pattern.svg' before this tag. -->
+  <script src="https://cdn.jsdelivr.net/gh/sirbepy/bepy-project-init@main/widget/background.js"></script>
+  <script>
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker.register("/sw.js");
+    }
+  </script>
   </body>
 
 </html>

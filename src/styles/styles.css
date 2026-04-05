@@ -5,10 +5,9 @@
 }
 
 body {
-  background: #f5f5f5;
-  font-family: system-ui, sans-serif;
+  font-family: var(--font-body);
   font-size: 14px;
-  color: #1a1a1a;
+  color: var(--color-text);
 }
 
 .page {
@@ -21,17 +20,19 @@ body {
 }
 
 .card {
-  background: #fff;
-  border: 1px solid #ddd;
-  border-radius: 8px;
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-card);
   padding: 20px;
+  box-shadow: var(--shadow-card);
 }
 
 .card h2 {
+  font-family: var(--font-heading);
   font-size: 15px;
   font-weight: 700;
   margin-bottom: 16px;
-  border-bottom: 1px solid #eee;
+  border-bottom: 1px solid var(--color-border);
   padding-bottom: 8px;
 }
 
@@ -44,7 +45,7 @@ body {
 
 .field label {
   font-size: 12px;
-  color: #555;
+  color: var(--color-text-muted);
   font-weight: 600;
 }
 
@@ -52,11 +53,13 @@ body {
 .field select,
 .field textarea {
   width: 100%;
-  border: 1px solid #ccc;
-  border-radius: 4px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-badge);
   padding: 7px 10px;
   font-size: 13px;
   font-family: inherit;
+  background: var(--color-surface-alt);
+  color: var(--color-text);
 }
 
 .field textarea {
@@ -72,35 +75,37 @@ body {
 
 hr {
   border: none;
-  border-top: 1px solid #eee;
+  border-top: 1px solid var(--color-border);
   margin: 12px 0;
 }
 
 .btn {
   display: inline-block;
   padding: 8px 16px;
-  border-radius: 4px;
-  border: 1px solid #999;
+  border-radius: var(--radius-badge);
+  border: 1px solid var(--color-border);
   font-size: 13px;
   cursor: pointer;
   font-family: inherit;
+  color: var(--color-text);
+  background: var(--color-surface-alt);
 }
 
 .btn-primary {
-  background: #222;
-  color: #fff;
-  border-color: #222;
+  background: var(--color-primary);
+  color: var(--color-background);
+  border-color: var(--color-primary);
 }
 
 .btn-green {
-  background: #2e7d32;
-  color: #fff;
-  border-color: #2e7d32;
+  background: var(--color-success);
+  color: var(--color-background);
+  border-color: var(--color-success);
 }
 
 select:disabled {
-  background: #f0f0f0;
-  color: #aaa;
+  background: var(--color-surface-alt);
+  color: var(--color-text-muted);
   cursor: not-allowed;
 }
 
@@ -115,10 +120,10 @@ select:disabled {
   align-items: center;
   justify-content: space-between;
   padding: 10px 12px;
-  border: 1px solid #eee;
-  border-radius: 6px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-badge);
   margin-bottom: 6px;
-  background: #fafafa;
+  background: var(--color-surface-alt);
   cursor: pointer;
 }
 
@@ -139,26 +144,27 @@ select:disabled {
 
 .guest-phone {
   font-size: 11px;
-  color: #888;
+  color: var(--color-text-muted);
 }
 
 .badge {
   font-size: 11px;
   padding: 3px 8px;
   border-radius: 12px;
-  border: 1px solid #ccc;
-  background: #fff;
+  border: 1px solid var(--color-border);
+  background: var(--color-surface);
+  color: var(--color-text-muted);
 }
 
 .badge.sent {
-  border-color: #4caf50;
-  color: #2e7d32;
-  background: #e8f5e9;
+  border-color: var(--color-success);
+  color: var(--color-success);
+  background: var(--color-surface-alt);
 }
 
 .unsent-action {
   font-size: 11px;
-  color: #999;
+  color: var(--color-text-muted);
   text-decoration: underline;
   cursor: pointer;
   margin-left: 8px;
@@ -166,7 +172,7 @@ select:disabled {
 
 .progress {
   font-size: 12px;
-  color: #555;
+  color: var(--color-text-muted);
   margin-bottom: 12px;
 }
 
@@ -178,7 +184,7 @@ select:disabled {
 
 .filtered-toggle {
   font-size: 12px;
-  color: #888;
+  color: var(--color-text-muted);
   cursor: pointer;
   text-decoration: underline;
   margin-top: 4px;

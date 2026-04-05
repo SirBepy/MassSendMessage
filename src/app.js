@@ -1,4 +1,4 @@
-import "./style.css";
+import "./styles/styles.css";
 import * as auth from "./auth.js";
 import * as sheet from "./sheet.js";
 import {
